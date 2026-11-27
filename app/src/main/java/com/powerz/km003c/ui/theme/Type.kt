@@ -47,7 +47,7 @@ object PzType {
     val caption = TextStyle(fontFamily = WordsFont, fontWeight = FontWeight.SemiBold, fontSize = 11.sp)
     val label = TextStyle(fontFamily = WordsFont, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 0.12.em)
 
-    val heroNumber = TextStyle(fontFamily = NumbersFont, fontWeight = FontWeight.Bold, fontSize = 88.sp, lineHeight = 88.sp, letterSpacing = (-0.02).em, fontFeatureSettings = TNUM)
+    val heroNumber = TextStyle(fontFamily = NumbersFont, fontWeight = FontWeight.Bold, fontSize = 72.sp, lineHeight = 72.sp, letterSpacing = (-0.02).em, fontFeatureSettings = TNUM)
     val metricLg = TextStyle(fontFamily = NumbersFont, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 44.sp, letterSpacing = (-0.01).em, fontFeatureSettings = TNUM)
     val metric = TextStyle(fontFamily = NumbersFont, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 28.sp, fontFeatureSettings = TNUM)
     val metricSm = TextStyle(fontFamily = NumbersFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 18.sp, fontFeatureSettings = TNUM)

@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import com.powerz.km003c.ui.theme.Brand
 import com.powerz.km003c.ui.theme.Ink
 import com.powerz.km003c.ui.theme.InkFaint
@@ -55,6 +56,10 @@ import com.powerz.km003c.ui.theme.Panel
 import com.powerz.km003c.ui.theme.PanelStrong
 import com.powerz.km003c.ui.theme.PzRadius
 import com.powerz.km003c.ui.theme.PzType
+
+/** Wide uppercase tracking suits Latin labels only; Hangul gets near-zero tracking. */
+internal fun TextStyle.forText(text: String): TextStyle =
+    if (text.any { it in '\uAC00'..'\uD7A3' || it in '\u3131'..'\u318E' }) copy(letterSpacing = 0.02.em) else this
 
 private val GaugeEasing = CubicBezierEasing(0.65f, 0f, 0.35f, 1f)
 
@@ -77,7 +82,7 @@ fun PzCard(
 /** Small uppercase label (VBUS, IBUS, POWER…). */
 @Composable
 fun PzLabel(text: String, color: Color = InkMuted, modifier: Modifier = Modifier) {
-    Text(text = text.uppercase(), style = PzType.label, color = color, modifier = modifier)
+    Text(text = text.uppercase(), style = PzType.label.forText(text), color = color, modifier = modifier)
 }
 
 /** Number + smaller muted unit, baseline aligned. */
@@ -129,12 +134,12 @@ fun PzRingGauge(
             val topLeft = Offset(inset, inset)
             val start = 135f
             val sweep = 270f
-            drawArc(PanelStrong, start, sweep, false, topLeft, arcSize, style = Stroke(sw, cap = StrokeCap.Round))
+            drawArc(Ink.copy(alpha = 0.08f), start, sweep, false, topLeft, arcSize, style = Stroke(sw, cap = StrokeCap.Round))
             if (shown > 0f) {
                 if (glow) {
                     drawArc(
-                        color.copy(alpha = 0.18f), start, sweep * shown, false, topLeft, arcSize,
-                        style = Stroke(sw * 2.6f, cap = StrokeCap.Round)
+                        color.copy(alpha = 0.10f), start, sweep * shown, false, topLeft, arcSize,
+                        style = Stroke(sw * 2f, cap = StrokeCap.Round)
                     )
                 }
                 drawArc(color, start, sweep * shown, false, topLeft, arcSize, style = Stroke(sw, cap = StrokeCap.Round))
@@ -159,7 +164,7 @@ fun PzProgressArc(
             val d = size.width - sw
             val topLeft = Offset(sw / 2f, sw / 2f)
             val arcSize = Size(d, d)
-            drawArc(PanelStrong, 180f, 180f, false, topLeft, arcSize, style = Stroke(sw, cap = StrokeCap.Round))
+            drawArc(Ink.copy(alpha = 0.08f), 180f, 180f, false, topLeft, arcSize, style = Stroke(sw, cap = StrokeCap.Round))
             val p = progress.coerceIn(0f, 1f)
             if (p > 0f) drawArc(color, 180f, 180f * p, false, topLeft, arcSize, style = Stroke(sw, cap = StrokeCap.Round))
         }
@@ -214,7 +219,7 @@ fun PzStatusPill(text: String, color: Color, modifier: Modifier = Modifier, dot:
             Box(Modifier.size(6.dp).clip(CircleShape).background(InkOnBrand))
             Spacer(Modifier.width(6.dp))
         }
-        Text(text.uppercase(), style = PzType.label, color = InkOnBrand)
+        Text(text.uppercase(), style = PzType.label.forText(text), color = InkOnBrand)
     }
 }
 
@@ -223,7 +228,7 @@ fun PzStatusPill(text: String, color: Color, modifier: Modifier = Modifier, dot:
 fun PzInfoPill(text: String, modifier: Modifier = Modifier, color: Color = InkMuted) {
     Text(
         text = text.uppercase(),
-        style = PzType.label,
+        style = PzType.label.forText(text),
         color = color,
         modifier = modifier
             .clip(CircleShape)
@@ -259,7 +264,7 @@ fun PzPrimaryButton(
             Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
         }
-        Text(text.uppercase(), style = PzType.headline)
+        Text(text.uppercase(), style = PzType.headline.forText(text))
     }
 }
 
@@ -285,7 +290,7 @@ fun PzSecondaryButton(
             Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(6.dp))
         }
-        Text(text.uppercase(), style = PzType.section, maxLines = 1)
+        Text(text.uppercase(), style = PzType.section.forText(text), maxLines = 1)
     }
 }
 
@@ -315,7 +320,7 @@ fun PzSectionHeader(
         modifier = modifier.fillMaxWidth().padding(top = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(title.uppercase(), style = PzType.section, color = InkMuted, modifier = Modifier.weight(1f))
+        Text(title.uppercase(), style = PzType.section.forText(title), color = InkMuted, modifier = Modifier.weight(1f))
         trailing()
     }
 }

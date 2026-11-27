@@ -61,7 +61,7 @@ typography:
     body-sm:        { size: 13, weight: 600, tracking: 0,      family: words }  # 공식 B3
     caption:        { size: 11, weight: 600, tracking: 0,      family: words }  # 공식 B4
     label:          { size: 11, weight: 700, tracking: 0.12em, family: words,   transform: uppercase }  # 지표 라벨 (VBUS, IBUS…)
-    hero-number:    { size: 88, weight: 700, tracking: -0.02em, family: numbers }  # 링 중앙 메인 값 (W)
+    hero-number:    { size: 72, weight: 700, tracking: -0.02em, family: numbers }  # 링 중앙 메인 값 (W)
     metric-lg:      { size: 44, weight: 700, tracking: -0.01em, family: numbers }  # V / A 타일
     metric:         { size: 28, weight: 700, tracking: 0,      family: numbers }  # mAh, Wh, 시간
     metric-sm:      { size: 18, weight: 700, tracking: 0,      family: numbers }  # D+/D-/CC, 통계

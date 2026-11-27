@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -246,7 +247,7 @@ private fun PowerHero(telemetry: TelemetrySample, stats: SessionStats, recording
             color = Power,
             glow = recording,
             strokeWidth = 14.dp,
-            modifier = Modifier.fillMaxWidth(0.74f)
+            modifier = Modifier.fillMaxWidth(0.78f)
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 PzLabel("Power", color = Power)
@@ -260,7 +261,7 @@ private fun PowerHero(telemetry: TelemetrySample, stats: SessionStats, recording
             }
         }
         Row(
-            modifier = Modifier.padding(top = 4.dp),
+            modifier = Modifier.offset(y = (-24).dp),
             horizontalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             HeroFootnote("Peak", String.format(Locale.US, "%.1f W", stats.maxPowerW))
