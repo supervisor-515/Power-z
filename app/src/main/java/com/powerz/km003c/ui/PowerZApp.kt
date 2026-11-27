@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -17,8 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Usb
 import androidx.compose.material.icons.filled.UsbOff
@@ -48,6 +49,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,17 +59,20 @@ import com.powerz.km003c.model.ConnectionState
 import com.powerz.km003c.model.DeviceInfo
 import com.powerz.km003c.model.RecordingState
 import com.powerz.km003c.model.SavedSession
-import com.powerz.km003c.ui.theme.AmpCyan
-import com.powerz.km003c.ui.theme.BgDark
-import com.powerz.km003c.ui.theme.EnergyGreen
-import com.powerz.km003c.ui.theme.RecordRed
-import com.powerz.km003c.ui.theme.SurfaceCard
-import com.powerz.km003c.ui.theme.SurfaceDark
-import com.powerz.km003c.ui.theme.SurfaceElevated
-import com.powerz.km003c.ui.theme.TextPrimary
-import com.powerz.km003c.ui.theme.TextSecondary
-import com.powerz.km003c.ui.theme.VoltYellow
-import com.powerz.km003c.ui.theme.WarnRed
+import com.powerz.km003c.ui.theme.BgBottom
+import com.powerz.km003c.ui.theme.Brand
+import com.powerz.km003c.ui.theme.Danger
+import com.powerz.km003c.ui.theme.Ink
+import com.powerz.km003c.ui.theme.InkFaint
+import com.powerz.km003c.ui.theme.InkMuted
+import com.powerz.km003c.ui.theme.Ok
+import com.powerz.km003c.ui.theme.Panel
+import com.powerz.km003c.ui.theme.PanelStrong
+import com.powerz.km003c.ui.theme.Pd
+import com.powerz.km003c.ui.theme.PzRadius
+import com.powerz.km003c.ui.theme.PzType
+import com.powerz.km003c.ui.theme.Warn
+import com.powerz.km003c.ui.theme.appBackground
 import com.powerz.km003c.viewmodel.PowerZViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -112,65 +117,48 @@ fun PowerZApp(
         connState == ConnectionState.CONNECTED_HID ||
         connState == ConnectionState.SIMULATOR
 
-    val dotColor = when (connState) {
-        ConnectionState.CONNECTED_VENDOR, ConnectionState.CONNECTED_HID -> EnergyGreen
-        ConnectionState.SIMULATOR -> AmpCyan
-        ConnectionState.CONNECTING, ConnectionState.REQUESTING_PERMISSION -> VoltYellow
-        ConnectionState.ERROR -> WarnRed
-        ConnectionState.DISCONNECTED -> TextSecondary
+    val connLabel = when (connState) {
+        ConnectionState.CONNECTED_VENDOR, ConnectionState.CONNECTED_HID -> "연결됨"
+        ConnectionState.SIMULATOR -> "시뮬레이터"
+        ConnectionState.CONNECTING, ConnectionState.REQUESTING_PERMISSION -> "연결 중"
+        ConnectionState.ERROR -> "오류"
+        ConnectionState.DISCONNECTED -> "연결 안 됨"
+    }
+    val connColor = when (connState) {
+        ConnectionState.CONNECTED_VENDOR, ConnectionState.CONNECTED_HID -> Ok
+        ConnectionState.SIMULATOR -> Pd
+        ConnectionState.CONNECTING, ConnectionState.REQUESTING_PERMISSION -> Warn
+        ConnectionState.ERROR -> Danger
+        ConnectionState.DISCONNECTED -> InkFaint
     }
 
     Scaffold(
-        containerColor = BgDark,
+        modifier = Modifier.appBackground(),
+        containerColor = Color.Transparent,
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
                 Snackbar(
                     snackbarData = data,
-                    containerColor = SurfaceElevated,
-                    contentColor = TextPrimary,
-                    shape = RoundedCornerShape(12.dp)
+                    containerColor = PanelStrong,
+                    contentColor = Ink,
+                    shape = RoundedCornerShape(PzRadius.md)
                 )
             }
         },
         topBar = {
             TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceDark),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .clip(CircleShape)
-                                .background(dotColor)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Column(modifier = Modifier.weight(1f, fill = false)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "POWER-Z KM003C",
-                                    color = TextPrimary,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    letterSpacing = 0.4.sp
-                                )
-                                if (recordingStatus.state == RecordingState.RECORDING) {
-                                    Spacer(Modifier.width(6.dp))
-                                    Text(
-                                        text = "REC",
-                                        color = TextPrimary,
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(RecordRed)
-                                            .padding(horizontal = 5.dp, vertical = 1.dp)
-                                    )
-                                }
-                            }
+                    Column {
+                        Text("POWER-Z", style = PzType.headline, color = Ink)
+                        Spacer(Modifier.height(2.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(6.dp).clip(CircleShape).background(connColor))
+                            Spacer(Modifier.width(6.dp))
                             Text(
-                                text = statusMsg,
-                                color = TextSecondary,
-                                fontSize = 11.sp,
+                                text = if (isConnected) connLabel else statusMsg.ifBlank { connLabel },
+                                style = PzType.caption,
+                                color = InkMuted,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -179,60 +167,47 @@ fun PowerZApp(
                 },
                 actions = {
                     IconButton(onClick = { showInfoDialog = true }) {
-                        Icon(Icons.Default.Info, contentDescription = "장치 정보", tint = TextSecondary)
+                        Icon(Icons.Outlined.Info, contentDescription = "장치 정보", tint = InkMuted)
                     }
                     if (!isConnected) {
                         IconButton(onClick = { viewModel.startSimulator() }) {
-                            Icon(Icons.Default.Science, contentDescription = "시뮬레이터", tint = AmpCyan)
+                            Icon(Icons.Outlined.Science, contentDescription = "시뮬레이터", tint = InkMuted)
                         }
                         IconButton(onClick = { viewModel.scanAndConnect() }) {
-                            Icon(Icons.Default.Usb, contentDescription = "USB 연결", tint = VoltYellow)
+                            Icon(Icons.Default.Usb, contentDescription = "USB 연결", tint = Brand)
                         }
                     } else {
                         IconButton(onClick = { viewModel.disconnect() }) {
-                            Icon(Icons.Default.UsbOff, contentDescription = "연결 해제", tint = WarnRed)
+                            Icon(Icons.Default.UsbOff, contentDescription = "연결 해제", tint = InkMuted)
                         }
                     }
                 }
             )
         },
         bottomBar = {
-            NavigationBar(containerColor = SurfaceDark) {
+            NavigationBar(containerColor = BgBottom, tonalElevation = 0.dp) {
                 val navColors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = VoltYellow,
-                    selectedTextColor = VoltYellow,
-                    indicatorColor = VoltYellow.copy(alpha = 0.14f),
-                    unselectedIconColor = TextSecondary,
-                    unselectedTextColor = TextSecondary
+                    selectedIconColor = Ink,
+                    selectedTextColor = Ink,
+                    indicatorColor = Color.Transparent,
+                    unselectedIconColor = InkFaint,
+                    unselectedTextColor = InkFaint
                 )
-                NavigationBarItem(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    colors = navColors,
-                    icon = { Icon(Icons.Default.Speed, contentDescription = null) },
-                    label = { Text("측정", fontSize = 11.sp) }
+                val tabs = listOf(
+                    "측정" to Icons.Default.Speed,
+                    "그래프" to Icons.AutoMirrored.Filled.ShowChart,
+                    "PD 분석" to Icons.AutoMirrored.Filled.ViewList,
+                    "트리거" to Icons.Default.Bolt
                 )
-                NavigationBarItem(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    colors = navColors,
-                    icon = { Icon(Icons.AutoMirrored.Filled.ShowChart, contentDescription = null) },
-                    label = { Text("그래프", fontSize = 11.sp) }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
-                    colors = navColors,
-                    icon = { Icon(Icons.AutoMirrored.Filled.ViewList, contentDescription = null) },
-                    label = { Text("PD 분석", fontSize = 11.sp) }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 3,
-                    onClick = { selectedTab = 3 },
-                    colors = navColors,
-                    icon = { Icon(Icons.Default.Bolt, contentDescription = null) },
-                    label = { Text("트리거", fontSize = 11.sp) }
-                )
+                tabs.forEachIndexed { index, (label, icon) ->
+                    NavigationBarItem(
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        colors = navColors,
+                        icon = { Icon(icon, contentDescription = null) },
+                        label = { Text(label, style = PzType.caption) }
+                    )
+                }
             }
         }
     ) { paddingValues ->
@@ -245,6 +220,7 @@ fun PowerZApp(
                 0 -> DashboardScreen(
                     telemetry = telemetry,
                     stats = stats,
+                    livePoints = graphPoints,
                     sampleRate = sampleRate,
                     isPaused = isPaused,
                     recordingConfig = recordingConfig,
@@ -316,8 +292,8 @@ fun PowerZApp(
 private fun DeviceInfoDialog(info: DeviceInfo, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = SurfaceCard,
-        title = { Text("KM003C 장치 정보", color = VoltYellow, fontWeight = FontWeight.Bold) },
+        containerColor = Panel, shape = RoundedCornerShape(PzRadius.md),
+        title = { Text("장치 정보", style = PzType.headline, color = Ink) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 InfoLine("모델명", info.productName)
@@ -333,7 +309,7 @@ private fun DeviceInfoDialog(info: DeviceInfo, onDismiss: () -> Unit) {
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("닫기", color = VoltYellow)
+                Text("닫기", style = PzType.body, color = Brand)
             }
         }
     )
@@ -345,8 +321,8 @@ private fun InfoLine(label: String, value: String) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(label, color = TextSecondary, fontSize = 12.sp)
+        Text(label, style = PzType.caption, color = InkMuted)
         Spacer(Modifier.width(12.dp))
-        Text(value, color = TextPrimary, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+        Text(value, style = PzType.mono, color = Ink)
     }
 }

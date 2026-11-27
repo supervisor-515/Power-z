@@ -1,4 +1,4 @@
-# POWER-Z KM003C Android App (v2.0.0)
+# POWER-Z KM003C Android App (v2.1.0)
 
 ChargerLAB **POWER-Z KM003C / KM002C** USB-C 테스터를 안드로이드 스마트폰에 USB-C OTG로 직접 연결해 사용할 수 있는 네이티브 안드로이드 앱(Kotlin + Jetpack Compose)입니다.
 
@@ -27,6 +27,19 @@ ChargerLAB **POWER-Z KM003C / KM002C** USB-C 테스터를 안드로이드 스마
    - 프로토콜 자동감지(`entry list`), PD/PPS PDO 읽기 및 슬라이더 전압 트리거, QC 2.0/3.0, AFC, FCP, UFCS, 시리얼 콘솔
 5. **시뮬레이터 모드**
    - 상단 플라스크(🧪) 아이콘으로 실제 장비 없이 모든 측정·자동종료·그래프 저장 기능 테스트 가능
+
+## 디자인 (v2.1.0)
+
+데이터 중심 다크 UI로 전면 리디자인했습니다. 상세 규칙은 [`design/DESIGN.md`](design/DESIGN.md)를 참고하세요.
+
+- **지표 하나 = 색 하나**: VBUS 노랑 `#FFDE00` · IBUS 파랑 `#0093E7` · POWER 주황 `#FF7A2F` · 용량/에너지 청록 `#00F19F` — 모든 화면과 PNG 내보내기에서 동일
+- **큰 숫자 + 링 게이지**: 측정 탭 중앙의 전력 링, 표준 PD 단계(5~240W)로 자동 스케일
+- **폰트**: Montserrat(글자) + Barlow(숫자, 고정폭 숫자) 번들 — SIL OFL, `licenses/`
+- **공통 컴포넌트**: `ui/components/PzComponents.kt`
+
+| 측정 | 그래프 | PD 분석 | 트리거 |
+|---|---|---|---|
+| ![](design/screenshots/03_recording.png) | ![](design/screenshots/06_chart_live.png) | ![](design/screenshots/08_pd.png) | ![](design/screenshots/09_trigger.png) |
 
 ## 빌드 및 테스트
 

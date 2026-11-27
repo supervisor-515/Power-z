@@ -6,7 +6,6 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.DashPathEffect
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
@@ -34,6 +33,21 @@ import kotlin.math.abs
  * direct saving to Gallery/Downloads via MediaStore, and FileProvider sharing (PNG / CSV / JSON).
  */
 class SessionExporter(private val context: Context) {
+
+    // Static Barlow cuts render reliably on Canvas (variable Montserrat falls back to its thinnest instance).
+    private val wordsBold: Typeface by lazy {
+        runCatching { androidx.core.content.res.ResourcesCompat.getFont(context, com.powerz.km003c.R.font.barlow_semibold) }
+            .getOrNull() ?: Typeface.DEFAULT_BOLD
+    }
+    private val numbersBold: Typeface by lazy {
+        runCatching { androidx.core.content.res.ResourcesCompat.getFont(context, com.powerz.km003c.R.font.barlow_bold) }
+            .getOrNull() ?: Typeface.MONOSPACE
+    }
+    private val numbersMedium: Typeface by lazy {
+        runCatching { androidx.core.content.res.ResourcesCompat.getFont(context, com.powerz.km003c.R.font.barlow_medium) }
+            .getOrNull() ?: Typeface.MONOSPACE
+    }
+
 
     private val sessionsDir: File
         get() = File(context.filesDir, "sessions").apply { mkdirs() }
@@ -312,32 +326,32 @@ class SessionExporter(private val context: Context) {
         val bgPaint = Paint().apply {
             shader = LinearGradient(
                 0f, 0f, 0f, height.toFloat(),
-                Color.parseColor("#0B0F17"),
-                Color.parseColor("#070A10"),
+                Color.parseColor("#283339"),
+                Color.parseColor("#101518"),
                 Shader.TileMode.CLAMP
             )
         }
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), bgPaint)
 
         val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#F4F8FF")
+            color = Color.parseColor("#FFFFFF")
             textSize = 38f
-            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            typeface = wordsBold
         }
         val subPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#8E9BB0")
+            color = Color.parseColor("#9AA7AF")
             textSize = 22f
         }
         val monoPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#DCE6F5")
+            color = Color.parseColor("#FFFFFF")
             textSize = 22f
-            typeface = Typeface.MONOSPACE
+            typeface = numbersMedium
         }
 
         // Header
         val dateStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date(session.summary.createdAtMs))
         val intervalStr = if (session.summary.intervalMs < 1000) "${session.summary.intervalMs}ms" else "${session.summary.intervalMs / 1000.0}s"
-        canvas.drawText("POWER-Z KM003C  •  ${session.summary.name}", 56f, 68f, titlePaint)
+        canvas.drawText("POWER-Z  ·  ${session.summary.name}", 56f, 68f, titlePaint)
         canvas.drawText(
             "$dateStr  |  간격 $intervalStr  |  ${session.summary.sampleCount} pts  |  종료: ${session.summary.stopReason}",
             56f, 104f, subPaint
@@ -350,34 +364,34 @@ class SessionExporter(private val context: Context) {
         val cardCount = 5
         val cardW = (width - 112f - cardGap * (cardCount - 1)) / cardCount
         val cards = listOf(
-            Triple("MAX VBUS", String.format(Locale.US, "%.3f V", session.summary.maxVbusV), Color.parseColor("#FFD54F")),
-            Triple("MAX IBUS", String.format(Locale.US, "%.3f A", session.summary.maxIbusA), Color.parseColor("#26E6FF")),
+            Triple("MAX VBUS", String.format(Locale.US, "%.3f V", session.summary.maxVbusV), Color.parseColor("#FFDE00")),
+            Triple("MAX IBUS", String.format(Locale.US, "%.3f A", session.summary.maxIbusA), Color.parseColor("#0093E7")),
             Triple("MAX / AVG W", String.format(Locale.US, "%.1f / %.1f W", session.summary.maxPowerW, session.summary.avgPowerW), Color.parseColor("#FF7A2F")),
-            Triple("CAPACITY", String.format(Locale.US, "%.1f mAh", session.summary.capacityMah), Color.parseColor("#2EE68A")),
-            Triple("ENERGY / TIME", String.format(Locale.US, "%.2f Wh • %.0fs", session.summary.energyMwh / 1000.0, session.summary.durationSec), Color.parseColor("#C49BFF"))
+            Triple("CAPACITY", String.format(Locale.US, "%.1f mAh", session.summary.capacityMah), Color.parseColor("#00F19F")),
+            Triple("ENERGY / TIME", String.format(Locale.US, "%.2f Wh • %.0fs", session.summary.energyMwh / 1000.0, session.summary.durationSec), Color.parseColor("#00F19F"))
         )
 
-        val cardBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#131A26") }
+        val cardBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#1A2227") }
         val cardBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#243044")
+            color = Color.parseColor("#2A353C")
             style = Paint.Style.STROKE
             strokeWidth = 2f
         }
         val cardLabelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#8896AC")
+            color = Color.parseColor("#9AA7AF")
             textSize = 18f
-            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            typeface = wordsBold
+            letterSpacing = 0.1f
         }
         val cardValuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            textSize = 27f
-            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+            textSize = 30f
+            typeface = numbersBold
         }
 
         cards.forEachIndexed { i, (label, value, color) ->
             val left = 56f + i * (cardW + cardGap)
             val rect = RectF(left, cardTop, left + cardW, cardBottom)
-            canvas.drawRoundRect(rect, 14f, 14f, cardBgPaint)
-            canvas.drawRoundRect(rect, 14f, 14f, cardBorderPaint)
+            canvas.drawRoundRect(rect, 16f, 16f, cardBgPaint)
             canvas.drawText(label, left + 18f, cardTop + 32f, cardLabelPaint)
             cardValuePaint.color = color
             canvas.drawText(value, left + 18f, cardTop + 70f, cardValuePaint)
@@ -392,8 +406,7 @@ class SessionExporter(private val context: Context) {
         val chartH = chartBottom - chartTop
 
         val chartRect = RectF(chartLeft, chartTop, chartRight, chartBottom)
-        canvas.drawRoundRect(chartRect, 14f, 14f, cardBgPaint)
-        canvas.drawRoundRect(chartRect, 14f, 14f, cardBorderPaint)
+        canvas.drawRoundRect(chartRect, 16f, 16f, cardBgPaint)
 
         val samples = session.samples
         if (samples.size >= 2) {
@@ -406,14 +419,13 @@ class SessionExporter(private val context: Context) {
 
             // Dashed Grid + Labels
             val gridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.parseColor("#222C3D")
+                color = Color.parseColor("#2A353C")
                 strokeWidth = 1.5f
-                pathEffect = DashPathEffect(floatArrayOf(8f, 8f), 0f)
             }
             val axisPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.parseColor("#7D8CA3")
+                color = Color.parseColor("#5E6B73")
                 textSize = 18f
-                typeface = Typeface.MONOSPACE
+                typeface = numbersMedium
             }
 
             for (step in 0..4) {
@@ -426,7 +438,6 @@ class SessionExporter(private val context: Context) {
             for (step in 0..5) {
                 val frac = step / 5f
                 val x = chartLeft + frac * chartW
-                canvas.drawLine(x, chartTop, x, chartBottom, gridPaint)
                 val tVal = minT + spanT * frac
                 canvas.drawText(String.format(Locale.US, "%.1fs", tVal), x - 24f, chartBottom + 32f, axisPaint)
             }
@@ -461,7 +472,7 @@ class SessionExporter(private val context: Context) {
                     )
                     style = Paint.Style.FILL
                 }
-                canvas.drawPath(fillPath, fillPaint)
+                if (fillAlpha > 0) canvas.drawPath(fillPath, fillPaint)
 
                 val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     this.color = color
@@ -473,9 +484,9 @@ class SessionExporter(private val context: Context) {
                 canvas.drawPath(linePath, strokePaint)
             }
 
-            if (showW) drawChannel("#FF7A2F", 46, maxW) { it.powerW }
-            if (showI) drawChannel("#26E6FF", 40, maxI) { abs(it.ibusA) }
-            if (showV) drawChannel("#FFD54F", 34, maxV) { it.vbusV }
+            if (showW) drawChannel("#FF7A2F", 36, maxW) { it.powerW }
+            if (showI) drawChannel("#0093E7", if (showW) 0 else 36, maxI) { abs(it.ibusA) }
+            if (showV) drawChannel("#FFDE00", if (showW || showI) 0 else 36, maxV) { it.vbusV }
 
             // Legend at bottom right
             val legendText = String.format(
