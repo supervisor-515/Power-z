@@ -49,8 +49,8 @@ typography:
     family: Montserrat         # Proxima Nova 대체 (SIL OFL, Google Fonts)
     fallback: [sans-serif]
   numbers:
-    family: D-DIN              # DINPro 대체 (SIL OFL, res/font에 번들)
-    fallback: [Barlow, sans-serif]
+    family: Barlow             # DINPro 대체 (SIL OFL, res/font에 번들 — D-DIN은 받을 수 없어 Barlow로 결정)
+    fallback: [sans-serif]
     features: [tnum]           # 숫자 폭 고정 → 실시간 값이 흔들리지 않음
   scale:
     # 이름            size  weight  tracking  font     transform
@@ -156,7 +156,7 @@ components:
 | 배경 | 그라데이션 `#283339 → #101518` | 순검정 `#000000` | **공식** — 앱 화면 기준이라서. 비공식은 웹 스토어 기준 |
 | 브랜드색 | TEAL `#00F19F` | 라임 `#a0d10b` | **공식 TEAL** — 라임은 웹 마케팅용 |
 | 글자 폰트 | Proxima Nova Semibold | Inter | Proxima 대체 **Montserrat** |
-| 숫자 폰트 | DINPro Bold | Inter tnum | DIN 대체 **D-DIN** |
+| 숫자 폰트 | DINPro Bold | Inter tnum | DIN 계열 대체 **Barlow** |
 | 헤드라인 | Bold, 대문자, 자간 10% | 800, 대문자, 음수 자간 | **공식** |
 | 상태 3색 | `#16EC06 / #FFDE00 / #FF0026` | 동일 | 동일 |
 | 반경·간격·모션·컴포넌트 구조 | 없음 | 8px 통일, 4 기반 간격, 링 채움 모션 | **비공식에서 차용** |
@@ -178,7 +178,7 @@ components:
 - 범례 칩(V / A / W 켜고 끄기) + 범위 칩.
 - 차트는 화면 폭 꽉 채움, 카드에 넣지 않음.
 - 저장 목록은 **session-card** 리스트.
-- PNG 내보내기도 같은 토큰 사용 (배경 그라데이션, 지표 색, D-DIN 숫자).
+- PNG 내보내기도 같은 토큰 사용 (배경 그라데이션, 지표 색, Barlow 숫자).
 
 ### PD 분석 / 트리거 탭
 - 이 두 탭만 정보 밀도 우선. **log-row** + mono 폰트.
@@ -204,7 +204,7 @@ components:
 ## 5. Compose 반영 순서
 
 1. `ui/theme/Color.kt` — 위 colors 토큰을 그대로 상수화, 기존 `VoltYellow` 등은 새 이름으로 교체.
-2. `ui/theme/Type.kt` — Montserrat / D-DIN 폰트 패밀리 등록 (`res/font/`), scale을 `TextStyle`로. 숫자 스타일엔 `fontFeatureSettings = "tnum"`.
+2. `ui/theme/Type.kt` — Montserrat / Barlow 폰트 패밀리 등록 (`res/font/`), scale을 `TextStyle`로. 숫자 스타일엔 `fontFeatureSettings = "tnum"`.
 3. `ui/theme/Theme.kt` — Material3 `darkColorScheme` 매핑 (primary=brand, background=bg-solid, surface=surface…) + 배경 그라데이션 `Modifier`.
 4. 공통 컴포넌트 `ui/components/` — PowerRing, MetricTile, StatRow, ProgressArc, StatusPill, SessionCard.
 5. 화면별 교체: 측정 → 그래프 → PD 분석 → 트리거.
