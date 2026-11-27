@@ -87,10 +87,10 @@ class MainActivity : ComponentActivity() {
             PowerZTheme {
                 PowerZApp(
                     viewModel = viewModel,
-                    onExportCsv = {
-                        val shareIntent = viewModel.createCsvShareIntent()
+                    onShareExport = { format, session, showV, showI, showW ->
+                        val shareIntent = viewModel.createShareIntent(format, session, showV, showI, showW)
                         if (shareIntent != null) {
-                            startActivity(Intent.createChooser(shareIntent, "CSV 측정 데이터 내보내기"))
+                            startActivity(Intent.createChooser(shareIntent, "POWER-Z $format 내보내기"))
                         } else {
                             Toast.makeText(this, "내보낼 측정 데이터가 없습니다.", Toast.LENGTH_SHORT).show()
                         }
@@ -99,7 +99,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Auto-connect if KM003C is already attached
         viewModel.scanAndConnect()
     }
 

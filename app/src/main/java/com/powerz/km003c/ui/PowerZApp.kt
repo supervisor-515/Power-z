@@ -12,27 +12,33 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Science
-import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Usb
 import androidx.compose.material.icons.filled.UsbOff
-import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -44,14 +50,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.powerz.km003c.model.ConnectionState
 import com.powerz.km003c.model.DeviceInfo
+import com.powerz.km003c.model.RecordingState
+import com.powerz.km003c.model.SavedSession
 import com.powerz.km003c.ui.theme.AmpCyan
 import com.powerz.km003c.ui.theme.BgDark
 import com.powerz.km003c.ui.theme.EnergyGreen
+import com.powerz.km003c.ui.theme.RecordRed
+import com.powerz.km003c.ui.theme.SurfaceCard
 import com.powerz.km003c.ui.theme.SurfaceDark
+import com.powerz.km003c.ui.theme.SurfaceElevated
 import com.powerz.km003c.ui.theme.TextPrimary
 import com.powerz.km003c.ui.theme.TextSecondary
 import com.powerz.km003c.ui.theme.VoltYellow
@@ -62,7 +74,7 @@ import com.powerz.km003c.viewmodel.PowerZViewModel
 @Composable
 fun PowerZApp(
     viewModel: PowerZViewModel,
-    onExportCsv: () -> Unit
+    onShareExport: (format: String, session: SavedSession?, showV: Boolean, showI: Boolean, showW: Boolean) -> Unit
 ) {
     val connState by viewModel.connectionState.collectAsState()
     val statusMsg by viewModel.statusMessage.collectAsState()
@@ -72,6 +84,13 @@ fun PowerZApp(
     val graphPoints by viewModel.graphPoints.collectAsState()
     val sampleRate by viewModel.sampleRate.collectAsState()
     val isPaused by viewModel.isPaused.collectAsState()
+
+    val recordingConfig by viewModel.recordingConfig.collectAsState()
+    val recordingStatus by viewModel.recordingStatus.collectAsState()
+    val recordingGraphPoints by viewModel.recordingGraphPoints.collectAsState()
+    val savedSessions by viewModel.savedSessions.collectAsState()
+    val viewingSavedSession by viewModel.viewingSavedSession.collectAsState()
+
     val pdCaptureEnabled by viewModel.pdCaptureEnabled.collectAsState()
     val pdLogs by viewModel.pdLogs.collectAsState()
     val pdmActive by viewModel.pdmActive.collectAsState()
@@ -80,6 +99,14 @@ fun PowerZApp(
 
     var selectedTab by remember { mutableIntStateOf(0) }
     var showInfoDialog by remember { mutableStateOf(false) }
+    var showRecordingSettings by remember { mutableStateOf(false) }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(Unit) {
+        viewModel.snackbarEvents.collect { msg ->
+            snackbarHostState.showSnackbar(msg)
+        }
+    }
 
     val isConnected = connState == ConnectionState.CONNECTED_VENDOR ||
         connState == ConnectionState.CONNECTED_HID ||
@@ -95,78 +122,114 @@ fun PowerZApp(
 
     Scaffold(
         containerColor = BgDark,
-        topBar = {
-            Column {
-                TopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceDark),
-                    title = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(10.dp)
-                                    .clip(CircleShape)
-                                    .background(dotColor)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Column {
-                                Text(
-                                    text = "POWER-Z KM003C",
-                                    color = TextPrimary,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = statusMsg,
-                                    color = TextSecondary,
-                                    fontSize = 11.sp,
-                                    maxLines = 1
-                                )
-                            }
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { showInfoDialog = true }) {
-                            Icon(Icons.Default.Info, contentDescription = "장치 정보", tint = TextSecondary)
-                        }
-                        if (!isConnected) {
-                            IconButton(onClick = { viewModel.startSimulator() }) {
-                                Icon(Icons.Default.Science, contentDescription = "시뮬레이터", tint = AmpCyan)
-                            }
-                            IconButton(onClick = { viewModel.scanAndConnect() }) {
-                                Icon(Icons.Default.Usb, contentDescription = "USB 연결", tint = VoltYellow)
-                            }
-                        } else {
-                            IconButton(onClick = { viewModel.disconnect() }) {
-                                Icon(Icons.Default.UsbOff, contentDescription = "연결 해제", tint = WarnRed)
-                            }
-                        }
-                    }
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = SurfaceElevated,
+                    contentColor = TextPrimary,
+                    shape = RoundedCornerShape(12.dp)
                 )
             }
         },
+        topBar = {
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceDark),
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .clip(CircleShape)
+                                .background(dotColor)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Column(modifier = Modifier.weight(1f, fill = false)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "POWER-Z KM003C",
+                                    color = TextPrimary,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    letterSpacing = 0.4.sp
+                                )
+                                if (recordingStatus.state == RecordingState.RECORDING) {
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = "REC",
+                                        color = TextPrimary,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(RecordRed)
+                                            .padding(horizontal = 5.dp, vertical = 1.dp)
+                                    )
+                                }
+                            }
+                            Text(
+                                text = statusMsg,
+                                color = TextSecondary,
+                                fontSize = 11.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showInfoDialog = true }) {
+                        Icon(Icons.Default.Info, contentDescription = "장치 정보", tint = TextSecondary)
+                    }
+                    if (!isConnected) {
+                        IconButton(onClick = { viewModel.startSimulator() }) {
+                            Icon(Icons.Default.Science, contentDescription = "시뮬레이터", tint = AmpCyan)
+                        }
+                        IconButton(onClick = { viewModel.scanAndConnect() }) {
+                            Icon(Icons.Default.Usb, contentDescription = "USB 연결", tint = VoltYellow)
+                        }
+                    } else {
+                        IconButton(onClick = { viewModel.disconnect() }) {
+                            Icon(Icons.Default.UsbOff, contentDescription = "연결 해제", tint = WarnRed)
+                        }
+                    }
+                }
+            )
+        },
         bottomBar = {
             NavigationBar(containerColor = SurfaceDark) {
+                val navColors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = VoltYellow,
+                    selectedTextColor = VoltYellow,
+                    indicatorColor = VoltYellow.copy(alpha = 0.14f),
+                    unselectedIconColor = TextSecondary,
+                    unselectedTextColor = TextSecondary
+                )
                 NavigationBarItem(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
+                    colors = navColors,
                     icon = { Icon(Icons.Default.Speed, contentDescription = null) },
                     label = { Text("측정", fontSize = 11.sp) }
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Default.ShowChart, contentDescription = null) },
+                    colors = navColors,
+                    icon = { Icon(Icons.AutoMirrored.Filled.ShowChart, contentDescription = null) },
                     label = { Text("그래프", fontSize = 11.sp) }
                 )
                 NavigationBarItem(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
-                    icon = { Icon(Icons.Default.ViewList, contentDescription = null) },
+                    colors = navColors,
+                    icon = { Icon(Icons.AutoMirrored.Filled.ViewList, contentDescription = null) },
                     label = { Text("PD 분석", fontSize = 11.sp) }
                 )
                 NavigationBarItem(
                     selected = selectedTab == 3,
                     onClick = { selectedTab = 3 },
+                    colors = navColors,
                     icon = { Icon(Icons.Default.Bolt, contentDescription = null) },
                     label = { Text("트리거", fontSize = 11.sp) }
                 )
@@ -184,14 +247,34 @@ fun PowerZApp(
                     stats = stats,
                     sampleRate = sampleRate,
                     isPaused = isPaused,
-                    onSelectRate = viewModel::setSampleRate,
+                    recordingConfig = recordingConfig,
+                    recordingStatus = recordingStatus,
+                    onStartRecording = viewModel::startRecording,
+                    onStopRecording = { viewModel.stopRecording() },
+                    onOpenRecordingSettings = { showRecordingSettings = true },
                     onTogglePause = viewModel::togglePause,
                     onResetStats = viewModel::resetSession,
-                    onExportCsv = onExportCsv
+                    onSavePng = { viewModel.saveSessionGraphPng() },
+                    onSaveCsv = { viewModel.saveSessionCsv() },
+                    onShareCsv = { onShareExport("CSV", null, true, true, true) },
+                    onOpenChartTab = {
+                        recordingStatus.lastSavedSessionId?.let { viewModel.openSavedSession(it) }
+                        selectedTab = 1
+                    }
                 )
                 1 -> ChartScreen(
                     telemetry = telemetry,
-                    points = graphPoints
+                    livePoints = graphPoints,
+                    recordingPoints = recordingGraphPoints,
+                    savedSessions = savedSessions,
+                    viewingSavedSession = viewingSavedSession,
+                    onOpenSavedSession = viewModel::openSavedSession,
+                    onCloseSavedSession = viewModel::closeSavedSessionView,
+                    onDeleteSavedSession = viewModel::deleteSavedSession,
+                    onSavePng = { session, v, i, w -> viewModel.saveSessionGraphPng(session, v, i, w) },
+                    onSaveCsv = { session -> viewModel.saveSessionCsv(session) },
+                    onSaveJson = { session -> viewModel.saveSessionJson(session) },
+                    onShare = onShareExport
                 )
                 2 -> PdAnalyzerScreen(
                     pdCaptureEnabled = pdCaptureEnabled,
@@ -214,6 +297,16 @@ fun PowerZApp(
         }
     }
 
+    if (showRecordingSettings) {
+        RecordingSettingsSheet(
+            config = recordingConfig,
+            sampleRate = sampleRate,
+            onSelectSampleRate = viewModel::setSampleRate,
+            onApply = viewModel::updateRecordingConfig,
+            onDismiss = { showRecordingSettings = false }
+        )
+    }
+
     if (showInfoDialog) {
         DeviceInfoDialog(info = deviceInfo, onDismiss = { showInfoDialog = false })
     }
@@ -223,7 +316,7 @@ fun PowerZApp(
 private fun DeviceInfoDialog(info: DeviceInfo, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = SurfaceDark,
+        containerColor = SurfaceCard,
         title = { Text("KM003C 장치 정보", color = VoltYellow, fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
