@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -323,4 +324,153 @@ fun PzSectionHeader(
         Text(title.uppercase(), style = PzType.section.forText(title), color = InkMuted, modifier = Modifier.weight(1f))
         trailing()
     }
+}
+
+/**
+ * Pill chip for segments, filters and presets.
+ * Selected = BrandSoft bg + Brand text (or [accent] dot when given). Unselected = PanelStrong + InkMuted.
+ */
+@Composable
+fun PzChip(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    accent: Color? = null,
+    enabled: Boolean = true
+) {
+    val bg = if (selected && accent == null) com.powerz.km003c.ui.theme.BrandSoft else PanelStrong
+    val fg = when {
+        !enabled -> InkFaint
+        selected && accent == null -> Brand
+        selected -> Ink
+        else -> InkMuted
+    }
+    Row(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(bg)
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        if (accent != null) {
+            Box(Modifier.size(8.dp).clip(CircleShape).background(if (selected) accent else InkFaint))
+            Spacer(Modifier.width(6.dp))
+        }
+        Text(text, style = PzType.label.forText(text), color = fg, maxLines = 1)
+    }
+}
+
+/** Centered empty-state message. */
+@Composable
+fun PzEmptyState(title: String, body: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(title, style = PzType.bodyLg, color = Ink, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        Text(body, style = PzType.bodySm, color = InkMuted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+    }
+}
+
+/** Brand-coloured switch. */
+@Composable
+fun PzSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, enabled: Boolean = true) {
+    androidx.compose.material3.Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        enabled = enabled,
+        colors = androidx.compose.material3.SwitchDefaults.colors(
+            checkedThumbColor = InkOnBrand,
+            checkedTrackColor = Brand,
+            checkedBorderColor = Brand,
+            uncheckedThumbColor = InkMuted,
+            uncheckedTrackColor = PanelStrong,
+            uncheckedBorderColor = PanelStrong
+        )
+    )
+}
+
+/** One PDO line: index · voltage (Vbus) · current (Ibus) · power · type pill. */
+@Composable
+fun PzPdoRow(
+    pdo: com.powerz.km003c.model.DecodedPdo,
+    modifier: Modifier = Modifier,
+    trailing: @Composable RowScope.() -> Unit = {}
+) {
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            "#${pdo.index}",
+            style = PzType.caption.copy(fontFamily = com.powerz.km003c.ui.theme.NumbersFont),
+            color = InkFaint,
+            modifier = Modifier.width(28.dp)
+        )
+        Text(
+            pdo.voltageDesc,
+            style = PzType.metricSm.copy(fontSize = PzType.bodyLg.fontSize),
+            color = com.powerz.km003c.ui.theme.Vbus,
+            modifier = Modifier.weight(1f),
+            maxLines = 1
+        )
+        Text(
+            String.format(java.util.Locale.US, "%.2fA", pdo.maxCurrentA),
+            style = PzType.bodySm.copy(fontFamily = com.powerz.km003c.ui.theme.NumbersFont, fontFeatureSettings = "tnum"),
+            color = com.powerz.km003c.ui.theme.IbusText
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            String.format(java.util.Locale.US, "%.0fW", pdo.maxPowerW),
+            style = PzType.bodySm.copy(fontFamily = com.powerz.km003c.ui.theme.NumbersFont, fontFeatureSettings = "tnum"),
+            color = InkMuted,
+            modifier = Modifier.width(44.dp),
+            textAlign = androidx.compose.ui.text.style.TextAlign.End
+        )
+        Spacer(Modifier.width(10.dp))
+        Box(modifier = Modifier.width(72.dp), contentAlignment = Alignment.CenterEnd) { PzInfoPill(pdo.type) }
+        trailing()
+    }
+}
+
+/** Monospace-ish rounded text field matching the design (Panel bg, Border → Brand focus). */
+@Composable
+fun PzTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: String = "",
+    textStyle: TextStyle = PzType.body,
+    singleLine: Boolean = true,
+    keyboardOptions: androidx.compose.foundation.text.KeyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default,
+    keyboardActions: androidx.compose.foundation.text.KeyboardActions = androidx.compose.foundation.text.KeyboardActions.Default,
+    suffix: String? = null,
+    enabled: Boolean = true
+) {
+    androidx.compose.material3.OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        enabled = enabled,
+        singleLine = singleLine,
+        textStyle = textStyle,
+        placeholder = { Text(placeholder, style = textStyle, color = InkFaint) },
+        suffix = suffix?.let { s -> { Text(s, style = PzType.caption, color = InkMuted) } },
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        shape = RoundedCornerShape(PzRadius.md),
+        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = Panel,
+            unfocusedContainerColor = Panel,
+            disabledContainerColor = Panel,
+            focusedBorderColor = Brand,
+            unfocusedBorderColor = com.powerz.km003c.ui.theme.Border,
+            disabledBorderColor = com.powerz.km003c.ui.theme.Border,
+            focusedTextColor = Ink,
+            unfocusedTextColor = Ink,
+            disabledTextColor = InkFaint,
+            cursorColor = Brand
+        )
+    )
 }

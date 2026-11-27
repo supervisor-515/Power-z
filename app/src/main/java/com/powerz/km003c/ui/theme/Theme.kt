@@ -42,23 +42,6 @@ val Ok = Color(0xFF16EC06)
 val Warn = Color(0xFFFFDE00)
 val Danger = Color(0xFFFF0026)
 
-// ── Legacy aliases (screens not yet migrated pick up the new palette) ──
-val BgDark = BgBottom
-val SurfaceDark = BgBottom
-val SurfaceCard = Panel
-val SurfaceElevated = PanelStrong
-val BorderSubtle = Border
-val BorderHighlight = Color(0xFF3A4750)
-val VoltYellow = Vbus
-val AmpCyan = Ibus
-val PowerOrange = Power
-val EnergyGreen = Energy
-val PdPurple = Pd
-val WarnRed = Danger
-val RecordRed = Danger
-val TextPrimary = Ink
-val TextSecondary = InkMuted
-
 val BackgroundGradient = Brush.verticalGradient(listOf(BgTop, BgBottom))
 
 fun Modifier.appBackground(): Modifier = this.background(BackgroundGradient)

@@ -1,9 +1,8 @@
 package com.powerz.km003c.ui
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -16,15 +15,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -34,23 +26,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.powerz.km003c.model.RecordingConfig
 import com.powerz.km003c.model.SampleRateMode
-import com.powerz.km003c.ui.theme.AmpCyan
-import com.powerz.km003c.ui.theme.BorderSubtle
-import com.powerz.km003c.ui.theme.EnergyGreen
-import com.powerz.km003c.ui.theme.PowerOrange
-import com.powerz.km003c.ui.theme.SurfaceCard
-import com.powerz.km003c.ui.theme.SurfaceDark
-import com.powerz.km003c.ui.theme.TextPrimary
-import com.powerz.km003c.ui.theme.TextSecondary
-import com.powerz.km003c.ui.theme.VoltYellow
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import com.powerz.km003c.ui.components.PzCard
+import com.powerz.km003c.ui.components.PzChip
+import com.powerz.km003c.ui.components.PzLabel
+import com.powerz.km003c.ui.components.PzPrimaryButton
+import com.powerz.km003c.ui.components.PzSectionHeader
+import com.powerz.km003c.ui.components.PzSwitch
+import com.powerz.km003c.ui.components.PzTextField
+import com.powerz.km003c.ui.theme.Ink
+import com.powerz.km003c.ui.theme.InkFaint
+import com.powerz.km003c.ui.theme.InkMuted
+import com.powerz.km003c.ui.theme.PanelStrong
+import com.powerz.km003c.ui.theme.PzRadius
+import com.powerz.km003c.ui.theme.PzType
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -91,348 +83,215 @@ fun RecordingSettingsSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = SurfaceDark
+        containerColor = PanelStrong,
+        shape = RoundedCornerShape(topStart = PzRadius.lg, topEnd = PzRadius.lg)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
-                .padding(bottom = 28.dp),
+                .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = "측정 간격 & 자동 종료 조건",
-                color = TextPrimary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Text("기록 설정", style = PzType.bodyLg.copy(fontSize = PzType.metricSm.fontSize), color = Ink)
 
-            // Session Name
-            OutlinedTextField(
+            PzTextField(
                 value = sessionName,
                 onValueChange = { sessionName = it },
-                label = { Text("측정 세션 이름 (비워두면 날짜/시간 자동 지정)") },
-                singleLine = true,
+                placeholder = "세션 이름 (비우면 날짜·시간)",
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Recording Interval Section
-            SectionCard(title = "기록 측정 간격 (Recording Interval)") {
+            // Interval
+            PzSectionHeader("기록 간격")
+            SheetCard {
                 val presets = listOf(
-                    10L to "10ms",
-                    50L to "50ms",
-                    100L to "100ms",
-                    200L to "200ms",
-                    500L to "500ms",
-                    1000L to "1초",
-                    2000L to "2초",
-                    5000L to "5초",
-                    10000L to "10초"
+                    10L to "10ms", 50L to "50ms", 100L to "100ms", 200L to "200ms", 500L to "500ms",
+                    1000L to "1초", 2000L to "2초", 5000L to "5초", 10000L to "10초"
                 )
                 val currentInterval = intervalMsText.toLongOrNull() ?: config.intervalMs
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     presets.forEach { (ms, label) ->
-                        FilterChip(
-                            selected = currentInterval == ms,
-                            onClick = { intervalMsText = ms.toString() },
-                            label = { Text(label, fontSize = 12.sp) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = VoltYellow.copy(alpha = 0.22f),
-                                selectedLabelColor = VoltYellow
-                            )
-                        )
+                        PzChip(label, currentInterval == ms, { intervalMsText = ms.toString() })
                     }
                 }
-                Spacer(Modifier.height(6.dp))
-                OutlinedTextField(
-                    value = intervalMsText,
-                    onValueChange = { intervalMsText = it.filter { c -> c.isDigit() } },
-                    label = { Text("직접 입력 (ms, 10 ~ 60000)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(6.dp))
-                Text("하드웨어 수집 속도 (KM003C SPS)", color = TextSecondary, fontSize = 11.sp)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
+                Spacer(Modifier.height(12.dp))
+                NumberField("직접 입력 (10 ~ 60000)", intervalMsText, { intervalMsText = it.filter { c -> c.isDigit() } }, "ms", decimal = false)
+                Spacer(Modifier.height(20.dp))
+                PzLabel("하드웨어 수집 속도")
+                Spacer(Modifier.height(10.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     SampleRateMode.entries.forEach { mode ->
-                        FilterChip(
-                            selected = sampleRate == mode,
-                            onClick = { onSelectSampleRate(mode) },
-                            label = { Text(mode.label, fontSize = 11.sp) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = AmpCyan.copy(alpha = 0.22f),
-                                selectedLabelColor = AmpCyan
-                            )
-                        )
+                        PzChip(mode.label, sampleRate == mode, { onSelectSampleRate(mode) })
                     }
                 }
             }
 
-            // Auto-Start Trigger
-            RuleToggleCard(
-                title = "전류 감지 자동 시작",
-                subtitle = "부하 연결로 전류가 기준 이상 흐를 때 기록 자동 시작",
+            // Auto start
+            PzSectionHeader("자동 시작")
+            RuleCard(
+                title = "전류 감지 시 시작",
+                subtitle = "전류가 기준 이상 흐르면 기록을 시작해요",
                 checked = autoStartEnabled,
                 onCheckedChange = { autoStartEnabled = it }
             ) {
-                OutlinedTextField(
-                    value = autoStartAText,
-                    onValueChange = { autoStartAText = it },
-                    label = { Text("시작 기준 전류 (A)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                NumberField("시작 기준 전류", autoStartAText, { autoStartAText = it }, "A")
             }
 
-            HorizontalDivider(color = BorderSubtle)
-            Text(
-                text = "자동 종료 조건 (복수 선택 시 먼저 충족된 조건으로 종료)",
-                color = TextSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+            // Auto stop
+            PzSectionHeader("자동 종료")
+            Text("여러 개를 켜면 먼저 충족된 조건으로 종료돼요.", style = PzType.caption, color = InkFaint)
 
-            // Stop Rule 1: Low Current (Full-Charge Detection)
-            RuleToggleCard(
-                title = "저전류 유지 종료 (완충 감지)",
-                subtitle = "전류가 설정값 이하로 지정 시간 동안 지속되면 자동 저장 후 종료",
+            RuleCard(
+                title = "저전류 유지 (완충 감지)",
+                subtitle = "전류가 기준 이하로 일정 시간 유지되면 종료",
                 checked = stopLowCurEnabled,
                 onCheckedChange = { stopLowCurEnabled = it }
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = stopLowCurAText,
-                        onValueChange = { stopLowCurAText = it },
-                        label = { Text("기준 전류 (A 이하)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = stopLowCurHoldText,
-                        onValueChange = { stopLowCurHoldText = it.filter { c -> c.isDigit() } },
-                        label = { Text("지속 시간 (초)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
+                    NumberField("기준 이하", stopLowCurAText, { stopLowCurAText = it }, "A", Modifier.weight(1f))
+                    NumberField("유지 시간", stopLowCurHoldText, { stopLowCurHoldText = it.filter { c -> c.isDigit() } }, "초", Modifier.weight(1f), decimal = false)
                 }
             }
 
-            // Stop Rule 2: Duration Limit
-            RuleToggleCard(
-                title = "시간 경과 종료",
-                subtitle = "설정한 시간이 지나면 자동으로 측정 종료",
+            RuleCard(
+                title = "시간 경과",
+                subtitle = "설정한 시간이 지나면 종료",
                 checked = stopDurationEnabled,
                 onCheckedChange = { stopDurationEnabled = it }
             ) {
                 val durPresets = listOf(30 to "30초", 60 to "1분", 300 to "5분", 600 to "10분", 1800 to "30분", 3600 to "1시간")
                 val curDur = stopDurationSecText.toIntOrNull() ?: config.stopDurationSec
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     durPresets.forEach { (sec, lbl) ->
-                        FilterChip(
-                            selected = curDur == sec,
-                            onClick = { stopDurationSecText = sec.toString() },
-                            label = { Text(lbl, fontSize = 11.sp) }
-                        )
+                        PzChip(lbl, curDur == sec, { stopDurationSecText = sec.toString() })
                     }
                 }
-                Spacer(Modifier.height(6.dp))
-                OutlinedTextField(
-                    value = stopDurationSecText,
-                    onValueChange = { stopDurationSecText = it.filter { c -> c.isDigit() } },
-                    label = { Text("측정 시간 (초)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Spacer(Modifier.height(12.dp))
+                NumberField("측정 시간", stopDurationSecText, { stopDurationSecText = it.filter { c -> c.isDigit() } }, "초", decimal = false)
             }
 
-            // Stop Rule 3: Low Power
-            RuleToggleCard(
-                title = "저전력 유지 종료",
-                subtitle = "전력(W)이 기준 이하로 지속되면 자동 종료",
+            RuleCard(
+                title = "저전력 유지",
+                subtitle = "전력이 기준 이하로 일정 시간 유지되면 종료",
                 checked = stopLowPwrEnabled,
                 onCheckedChange = { stopLowPwrEnabled = it }
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = stopLowPwrWText,
-                        onValueChange = { stopLowPwrWText = it },
-                        label = { Text("기준 전력 (W 이하)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = stopLowPwrHoldText,
-                        onValueChange = { stopLowPwrHoldText = it.filter { c -> c.isDigit() } },
-                        label = { Text("지속 시간 (초)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
+                    NumberField("기준 이하", stopLowPwrWText, { stopLowPwrWText = it }, "W", Modifier.weight(1f))
+                    NumberField("유지 시간", stopLowPwrHoldText, { stopLowPwrHoldText = it.filter { c -> c.isDigit() } }, "초", Modifier.weight(1f), decimal = false)
                 }
             }
 
-            // Stop Rule 4: Voltage Threshold
-            RuleToggleCard(
-                title = "전압 기준 종료",
-                subtitle = "VBUS가 기준 전압 이하(또는 이상)로 지속되면 종료",
+            RuleCard(
+                title = "전압 기준",
+                subtitle = "VBUS가 기준 이하(또는 이상)로 유지되면 종료",
                 checked = stopVoltEnabled,
                 onCheckedChange = { stopVoltEnabled = it }
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = stopVoltBelow,
-                        onClick = { stopVoltBelow = true },
-                        label = { Text("기준 이하 (≤)") }
-                    )
-                    FilterChip(
-                        selected = !stopVoltBelow,
-                        onClick = { stopVoltBelow = false },
-                        label = { Text("기준 이상 (≥)") }
-                    )
+                    PzChip("이하 ≤", stopVoltBelow, { stopVoltBelow = true }, Modifier.weight(1f))
+                    PzChip("이상 ≥", !stopVoltBelow, { stopVoltBelow = false }, Modifier.weight(1f))
                 }
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = stopVoltVText,
-                        onValueChange = { stopVoltVText = it },
-                        label = { Text("기준 전압 (V)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = stopVoltHoldText,
-                        onValueChange = { stopVoltHoldText = it.filter { c -> c.isDigit() } },
-                        label = { Text("지속 시간 (초)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
+                    NumberField("기준 전압", stopVoltVText, { stopVoltVText = it }, "V", Modifier.weight(1f))
+                    NumberField("유지 시간", stopVoltHoldText, { stopVoltHoldText = it.filter { c -> c.isDigit() } }, "초", Modifier.weight(1f), decimal = false)
                 }
             }
 
-            // Stop Rule 5: Capacity Target
-            RuleToggleCard(
-                title = "목표 용량 도달 종료",
-                subtitle = "누적 용량(mAh)이 목표치에 도달하면 종료",
+            RuleCard(
+                title = "목표 용량 도달",
+                subtitle = "누적 용량이 목표치에 도달하면 종료",
                 checked = stopCapEnabled,
                 onCheckedChange = { stopCapEnabled = it }
             ) {
-                OutlinedTextField(
-                    value = stopCapMahText,
-                    onValueChange = { stopCapMahText = it },
-                    label = { Text("목표 용량 (mAh)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                NumberField("목표 용량", stopCapMahText, { stopCapMahText = it }, "mAh")
             }
 
-            Button(
+            Spacer(Modifier.height(8.dp))
+            PzPrimaryButton(
+                text = "설정 적용",
                 onClick = {
-                    val updated = RecordingConfig(
-                        sessionName = sessionName.trim(),
-                        intervalMs = (intervalMsText.toLongOrNull() ?: config.intervalMs).coerceIn(10L, 60_000L),
-                        autoStartCurrentEnabled = autoStartEnabled,
-                        autoStartCurrentA = (autoStartAText.toDoubleOrNull() ?: config.autoStartCurrentA).coerceAtLeast(0.01),
-                        stopByDurationEnabled = stopDurationEnabled,
-                        stopDurationSec = (stopDurationSecText.toIntOrNull() ?: config.stopDurationSec).coerceAtLeast(1),
-                        stopByLowCurrentEnabled = stopLowCurEnabled,
-                        stopLowCurrentA = (stopLowCurAText.toDoubleOrNull() ?: config.stopLowCurrentA).coerceAtLeast(0.0),
-                        stopLowCurrentHoldSec = (stopLowCurHoldText.toIntOrNull() ?: config.stopLowCurrentHoldSec).coerceAtLeast(1),
-                        stopByLowPowerEnabled = stopLowPwrEnabled,
-                        stopLowPowerW = (stopLowPwrWText.toDoubleOrNull() ?: config.stopLowPowerW).coerceAtLeast(0.0),
-                        stopLowPowerHoldSec = (stopLowPwrHoldText.toIntOrNull() ?: config.stopLowPowerHoldSec).coerceAtLeast(1),
-                        stopByVoltageEnabled = stopVoltEnabled,
-                        stopVoltageBelow = stopVoltBelow,
-                        stopVoltageV = (stopVoltVText.toDoubleOrNull() ?: config.stopVoltageV).coerceAtLeast(0.0),
-                        stopVoltageHoldSec = (stopVoltHoldText.toIntOrNull() ?: config.stopVoltageHoldSec).coerceAtLeast(1),
-                        stopByCapacityEnabled = stopCapEnabled,
-                        stopTargetMah = (stopCapMahText.toDoubleOrNull() ?: config.stopTargetMah).coerceAtLeast(1.0)
-                    )
+            val updated = RecordingConfig(
+                sessionName = sessionName.trim(),
+                intervalMs = (intervalMsText.toLongOrNull() ?: config.intervalMs).coerceIn(10L, 60_000L),
+                autoStartCurrentEnabled = autoStartEnabled,
+                autoStartCurrentA = (autoStartAText.toDoubleOrNull() ?: config.autoStartCurrentA).coerceAtLeast(0.01),
+                stopByDurationEnabled = stopDurationEnabled,
+                stopDurationSec = (stopDurationSecText.toIntOrNull() ?: config.stopDurationSec).coerceAtLeast(1),
+                stopByLowCurrentEnabled = stopLowCurEnabled,
+                stopLowCurrentA = (stopLowCurAText.toDoubleOrNull() ?: config.stopLowCurrentA).coerceAtLeast(0.0),
+                stopLowCurrentHoldSec = (stopLowCurHoldText.toIntOrNull() ?: config.stopLowCurrentHoldSec).coerceAtLeast(1),
+                stopByLowPowerEnabled = stopLowPwrEnabled,
+                stopLowPowerW = (stopLowPwrWText.toDoubleOrNull() ?: config.stopLowPowerW).coerceAtLeast(0.0),
+                stopLowPowerHoldSec = (stopLowPwrHoldText.toIntOrNull() ?: config.stopLowPowerHoldSec).coerceAtLeast(1),
+                stopByVoltageEnabled = stopVoltEnabled,
+                stopVoltageBelow = stopVoltBelow,
+                stopVoltageV = (stopVoltVText.toDoubleOrNull() ?: config.stopVoltageV).coerceAtLeast(0.0),
+                stopVoltageHoldSec = (stopVoltHoldText.toIntOrNull() ?: config.stopVoltageHoldSec).coerceAtLeast(1),
+                stopByCapacityEnabled = stopCapEnabled,
+                stopTargetMah = (stopCapMahText.toDoubleOrNull() ?: config.stopTargetMah).coerceAtLeast(1.0)
+            )
                     onApply(updated)
                     onDismiss()
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = VoltYellow)
-            ) {
-                Text("설정 적용", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-            }
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
 
 @Composable
-private fun SectionCard(
+private fun SheetCard(content: @Composable ColumnScope.() -> Unit) {
+    PzCard(modifier = Modifier.fillMaxWidth(), content = content)
+}
+
+@Composable
+private fun RuleCard(
     title: String,
-    content: @Composable () -> Unit
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = SurfaceCard),
-        border = BorderStroke(1.dp, BorderSubtle),
-        shape = RoundedCornerShape(14.dp)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(title, color = VoltYellow, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(8.dp))
+    PzCard(modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, style = PzType.body, color = Ink)
+                Spacer(Modifier.height(2.dp))
+                Text(subtitle, style = PzType.caption, color = InkMuted)
+            }
+            Spacer(Modifier.width(12.dp))
+            PzSwitch(checked = checked, onCheckedChange = onCheckedChange)
+        }
+        if (checked) {
+            Spacer(Modifier.height(16.dp))
             content()
         }
     }
 }
 
 @Composable
-private fun RuleToggleCard(
-    title: String,
-    subtitle: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    content: @Composable () -> Unit
+private fun NumberField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    unit: String,
+    modifier: Modifier = Modifier.fillMaxWidth(),
+    decimal: Boolean = true
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = SurfaceCard),
-        border = BorderStroke(1.dp, if (checked) EnergyGreen.copy(alpha = 0.55f) else BorderSubtle),
-        shape = RoundedCornerShape(14.dp)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(title, color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                    Text(subtitle, color = TextSecondary, fontSize = 11.sp)
-                }
-                Spacer(Modifier.width(8.dp))
-                Switch(checked = checked, onCheckedChange = onCheckedChange)
-            }
-            if (checked) {
-                Spacer(Modifier.height(10.dp))
-                content()
-            }
-        }
+    Column(modifier = modifier) {
+        Text(label, style = PzType.caption, color = InkMuted)
+        Spacer(Modifier.height(6.dp))
+        PzTextField(
+            value = value,
+            onValueChange = onValueChange,
+            textStyle = PzType.metricSm,
+            suffix = unit,
+            keyboardOptions = KeyboardOptions(keyboardType = if (decimal) KeyboardType.Decimal else KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
