@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ChargerLAB POWER-Z KM003C (VID: 0x5FC9 = 24521, PID: 0x0063 = 99) -->
+    <usb-device vendor-id="24521" product-id="99" />
+    <!-- ChargerLAB POWER-Z KM002C (VID: 0x5FC9 = 24521, PID: 0x0061 = 97) -->
+    <usb-device vendor-id="24521" product-id="97" />
+</resources>
